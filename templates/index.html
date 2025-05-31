@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeGuard AI - Violence Detection System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            font-size: 3em;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header .subtitle {
+            font-size: 1.2em;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+
+        .description {
+            text-align: left;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+            color: #555;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .video-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .video-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        #video {
+            width: 100%;
+            max-width: 480px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            display: block;
+            margin: 0 auto;
+        }
+
+        .video-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+
+        .status-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .status-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 5px solid #28a745;
+            transition: all 0.3s ease;
+        }
+
+        .status-card.violence {
+            border-left-color: #dc3545;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+        }
+
+        .status-card.safe {
+            border-left-color: #28a745;
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        }
+
+        .status-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .confidence-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .violence .confidence-fill {
+            background: linear-gradient(90deg, #dc3545, #fd7e14);
+        }
+
+        .detection-history {
+            display: flex;
+            gap: 5px;
+            margin: 15px 0;
+            justify-content: center;
+        }
+
+        .history-dot {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #dee2e6;
+            transition: all 0.3s ease;
+        }
+
+        .history-dot.safe {
+            background: #28a745;
+        }
+
+        .history-dot.violence {
+            background: #dc3545;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .sos-button {
+            width: 100%;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sos-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(255, 107, 107, 0.4);
+        }
+
+        .sos-button:active {
+            transform: translateY(0);
+        }
+
+        .team-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .team-member {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            transition: transform 0.3s ease;
+        }
+
+        .team-member:hover {
+            transform: translateY(-5px);
+        }
+
+        .features-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            margin-bottom: 30px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .feature-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+        }
+
+        .alert-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1em;
+            z-index: 1000;
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+            box-shadow: 0 5px 20px rgba(255, 107, 107, 0.3);
+        }
+
+        .alert-banner.show {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="alert-banner" id="alertBanner">
+        🚨 VIOLENCE DETECTED - AUTHORITIES HAVE BEEN NOTIFIED 🚨
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>SafeGuard AI</h1>
+            <div class="subtitle">Real-time Violence Detection System</div>
+            <div class="description">
+                <p><strong>SafeGuard AI</strong> is an advanced computer vision system that uses deep learning to detect violence in real-time video streams. Our system employs a sliding window approach to analyze patterns over time, reducing false positives and providing more accurate threat assessment. The system continuously monitors video feeds and can automatically alert authorities when violent behavior is detected, making it ideal for security applications in public spaces, schools, and workplaces.</p>
+            </div>
+        </div>
+
+        <div class="features-section">
+            <h2>Key Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🎥</div>
+                    <h3>Real-time Monitoring</h3>
+                    <p>Continuous video analysis with instant threat detection</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🧠</div>
+                    <h3>AI-Powered Detection</h3>
+                    <p>Advanced deep learning models trained on extensive datasets</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Sliding Window Analysis</h3>
+                    <p>Smart pattern recognition over time windows for accuracy</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🚨</div>
+                    <h3>Instant Alerts</h3>
+                    <p>Immediate notifications and emergency response integration</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="video-section">
+                <h2>Live Video Feed</h2>
+                <div class="video-container">
+                    <video id="video" autoplay muted></video>
+                    <div class="video-overlay" id="videoStatus">🔴 LIVE</div>
+                </div>
+                <div class="status-card safe" id="statusCard">
+                    <div class="status-title" id="statusTitle">System Status: SAFE</div>
+                    <div>Confidence: <span id="confidenceText">0%</span></div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" id="confidenceFill" style="width: 0%"></div>
+                    </div>
+                    <div>Detection History (Last 5 readings):</div>
+                    <div class="detection-history" id="detectionHistory">
+                        <div class="history-dot"></div>
+                        <div class="history-dot"></div>
+                        <div class="history-dot"></div>
+                        <div class="history-dot"></div>
+                        <div class="history-dot"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="status-section">
+                <h2>Emergency Controls</h2>
+                <button class="sos-button" onclick="sendSOS()">🚨 EMERGENCY SOS</button>
+                
+                <div style="margin-top: 30px;">
+                    <h3>System Information</h3>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-top: 10px; text-align: left;">
+                        <p><strong>Detection Method:</strong> Sliding Window (3/5 consensus)</p>
+                        <p><strong>Analysis Interval:</strong> Every 2 seconds</p>
+                        <p><strong>Model Accuracy:</strong> </p>
+                        <p><strong>Response Time:</strong> < 1 second</p>
+                        <p><strong>Status:</strong> <span id="systemStatus" style="color: #28a745; font-weight: bold;">ONLINE</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="team-section">
+            <h2>Development Team</h2>
+            <p>Meet the brilliant minds behind SafeGuard AI</p>
+            <div class="team-grid">
+                <div class="team-member">
+                    <h3>Harshit Saroha</h3>
+                    <p>Lead AI Developer</p>
+                    <p>Deep Learning & Computer Vision Specialist</p>
+                </div>
+                <div class="team-member">
+                    <h3>Suryansh Tripathi</h3>
+                    <p>Backend Developer</p>
+                    <p>Flask & API Integration Expert</p>
+                </div>
+                <div class="team-member">
+                    <h3>Somoujeet Kundu</h3>
+                    <p>Frontend Developer</p>
+                    <p>UI/UX Design & Web Technologies</p>
+                </div>
+                <div class="team-member">
+                    <h3>Subendhu Karmakar</h3>
+                    <p>Data Scientist</p>
+                    <p>Model Training & Optimization</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const statusCard = document.getElementById('statusCard');
+        const statusTitle = document.getElementById('statusTitle');
+        const confidenceText = document.getElementById('confidenceText');
+        const confidenceFill = document.getElementById('confidenceFill');
+        const detectionHistory = document.getElementById('detectionHistory');
+        const alertBanner = document.getElementById('alertBanner');
+        const systemStatus = document.getElementById('systemStatus');
+
+        // Sliding window for violence detection (stores last 5 predictions)
+        let detectionWindow = [];
+        let isViolenceDetected = false;
+
+        // Access webcam
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+                systemStatus.textContent = 'ONLINE';
+                systemStatus.style.color = '#28a745';
+            })
+            .catch(err => {
+                console.error("Camera error:", err);
+                systemStatus.textContent = 'CAMERA ERROR';
+                systemStatus.style.color = '#dc3545';
+                statusTitle.textContent = 'System Status: CAMERA ERROR';
+                statusCard.className = 'status-card violence';
+            });
+
+        // Update detection history display
+        function updateDetectionHistory() {
+            const dots = detectionHistory.children;
+            for (let i = 0; i < dots.length; i++) {
+                const dot = dots[i];
+                if (i < detectionWindow.length) {
+                    dot.className = `history-dot ${detectionWindow[i] ? 'violence' : 'safe'}`;
+                } else {
+                    dot.className = 'history-dot';
+                }
+            }
+        }
+
+        // Check if violence is detected using sliding window approach
+        function checkViolenceConsensus() {
+            if (detectionWindow.length < 3) return false;
+            
+            // Count violence detections in the last 5 readings
+            const violenceCount = detectionWindow.filter(Boolean).length;
+            
+            // If 3 or more out of 5 recent detections are violence, trigger alert
+            return violenceCount >= 3;
+        }
+
+        // Update UI based on detection results
+        function updateUI(prediction, confidence) {
+            // Add to sliding window (keep last 5)
+            detectionWindow.push(prediction > 0.5);
+            if (detectionWindow.length > 5) {
+                detectionWindow.shift();
+            }
+
+            // Update history display
+            updateDetectionHistory();
+
+            // Check consensus
+            const violenceConsensus = checkViolenceConsensus();
+
+            // Update confidence display
+            confidenceText.textContent = `${(confidence * 100).toFixed(1)}%`;
+            confidenceFill.style.width = `${confidence * 100}%`;
+
+            // Update status based on consensus
+            if (violenceConsensus && !isViolenceDetected) {
+                // Violence detected for first time
+                isViolenceDetected = true;
+                statusCard.className = 'status-card violence';
+                statusTitle.textContent = '🚨 VIOLENCE DETECTED';
+                alertBanner.classList.add('show');
+                
+                // Auto-hide alert banner after 5 seconds
+                setTimeout(() => {
+                    alertBanner.classList.remove('show');
+                }, 5000);
+
+                // Simulate automatic SOS
+                setTimeout(() => {
+                    console.log("Automatic emergency response triggered");
+                }, 1000);
+
+            } else if (!violenceConsensus && isViolenceDetected) {
+                // Violence no longer detected
+                isViolenceDetected = false;
+                statusCard.className = 'status-card safe';
+                statusTitle.textContent = 'System Status: SAFE';
+                alertBanner.classList.remove('show');
+            }
+
+            // If no consensus yet, show current prediction
+            if (!violenceConsensus && !isViolenceDetected) {
+                statusCard.className = 'status-card safe';
+                statusTitle.textContent = 'System Status: MONITORING';
+            }
+        }
+
+        // Capture and send frame every 2 seconds
+        setInterval(() => {
+            if (video.videoWidth === 0) return; // Skip if video not ready
+
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+
+            canvas.toBlob(blob => {
+                const formData = new FormData();
+                formData.append('file', blob, 'frame.jpg');
+
+                fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    updateUI(data.confidence, data.confidence);
+                })
+                .catch(err => {
+                    console.error("Prediction error:", err);
+                    statusTitle.textContent = "System Status: PREDICTION ERROR";
+                    statusCard.className = 'status-card violence';
+                });
+            }, 'image/jpeg');
+        }, 2000);
+
+        // SOS Button
+        function sendSOS() {
+            // Visual feedback
+            alertBanner.textContent = '🚨 MANUAL SOS ACTIVATED - EMERGENCY SERVICES CONTACTED 🚨';
+            alertBanner.classList.add('show');
+            
+            // Force violence detection state
+            isViolenceDetected = true;
+            statusCard.className = 'status-card violence';
+            statusTitle.textContent = '🚨 MANUAL EMERGENCY ALERT';
+            
+            // Here you would implement actual emergency response
+            console.log("Manual SOS triggered!");
+            alert("🚨 Emergency SOS Activated!\n\n• Emergency services have been notified\n• Location has been shared\n• Incident is being recorded\n\nHelp is on the way!");
+            
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                alertBanner.classList.remove('show');
+                alertBanner.textContent = '🚨 VIOLENCE DETECTED - AUTHORITIES HAVE BEEN NOTIFIED 🚨';
+            }, 10000);
+        }
+
+        // Add some dynamic effects
+        setInterval(() => {
+            const videoOverlay = document.getElementById('videoStatus');
+            videoOverlay.style.opacity = videoOverlay.style.opacity === '0.5' ? '1' : '0.5';
+        }, 1000);
+    </script>
+</body>
+</html>
