@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 from tensorflow.keras.models import load_model
 from flask_cors import CORS
+import os
 
 
 app = Flask(__name__)
@@ -45,4 +46,5 @@ def predict():
     return jsonify({'label': label, 'confidence': confidence})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
