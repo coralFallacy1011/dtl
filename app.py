@@ -24,7 +24,7 @@ def load_model_with_fallback():
     logger.info(f"Directory contents: {os.listdir('.')}")
     
     # Check for model files
-    h5_exists = os.path.exists('baigan.h5')
+    h5_exists = os.path.exists('violence_detection_model.h5')
     savedmodel_exists = os.path.exists('violence_detection_model')
     
     logger.info(f"violence_detection_model.h5 exists: {h5_exists}")
