@@ -19,33 +19,72 @@ def load_model_with_fallback():
     """Try to load the model with different methods"""
     global model
     
-    try:
-        # Method 1: Try standard Keras load_model
-        from tensorflow.keras.models import load_model
-        model = load_model('violence_detection_model.h5')
-        logger.info("Model loaded successfully with standard method")
-        return True
-    except Exception as e:
-        logger.error(f"Standard model loading failed: {e}")
+    # First, check if files exist and log directory contents
+    logger.info(f"Current working directory: {os.getcwd()}")
+    logger.info(f"Directory contents: {os.listdir('.')}")
     
-    try:
-        # Method 2: Try with custom_objects parameter
-        from tensorflow.keras.models import load_model
-        model = load_model('violence_detection_model.h5', custom_objects=None, compile=False)
-        logger.info("Model loaded successfully with compile=False")
-        return True
-    except Exception as e:
-        logger.error(f"Model loading with compile=False failed: {e}")
+    # Check for model files
+    h5_exists = os.path.exists('baigan.h5')
+    savedmodel_exists = os.path.exists('violence_detection_model')
     
-    try:
-        # Method 3: Try loading with TensorFlow's saved_model format if available
-        import tensorflow as tf
-        if os.path.exists('violence_detection_model'):
+    logger.info(f"violence_detection_model.h5 exists: {h5_exists}")
+    logger.info(f"violence_detection_model directory exists: {savedmodel_exists}")
+    
+    if h5_exists:
+        file_size = os.path.getsize('violence_detection_model.h5')
+        logger.info(f"Model file size: {file_size} bytes")
+    
+    # Log TensorFlow version
+    import tensorflow as tf
+    logger.info(f"TensorFlow version: {tf.__version__}")
+    
+    if not h5_exists and not savedmodel_exists:
+        logger.error("No model files found!")
+        return False
+    
+    if h5_exists:
+        try:
+            # Method 1: Try standard Keras load_model
+            from tensorflow.keras.models import load_model
+            logger.info("Attempting to load model with standard method...")
+            model = load_model('violence_detection_model.h5')
+            logger.info("Model loaded successfully with standard method")
+            return True
+        except Exception as e:
+            logger.error(f"Standard model loading failed: {str(e)}")
+            logger.error(f"Exception type: {type(e).__name__}")
+        
+        try:
+            # Method 2: Try with compile=False
+            from tensorflow.keras.models import load_model
+            logger.info("Attempting to load model with compile=False...")
+            model = load_model('violence_detection_model.h5', compile=False)
+            logger.info("Model loaded successfully with compile=False")
+            return True
+        except Exception as e:
+            logger.error(f"Model loading with compile=False failed: {str(e)}")
+            logger.error(f"Exception type: {type(e).__name__}")
+        
+        try:
+            # Method 3: Try with custom objects
+            from tensorflow.keras.models import load_model
+            logger.info("Attempting to load model with custom_objects={}...")
+            model = load_model('violence_detection_model.h5', custom_objects={}, compile=False)
+            logger.info("Model loaded successfully with custom_objects")
+            return True
+        except Exception as e:
+            logger.error(f"Model loading with custom_objects failed: {str(e)}")
+    
+    if savedmodel_exists:
+        try:
+            # Method 4: Try loading SavedModel format
+            import tensorflow as tf
+            logger.info("Attempting to load SavedModel format...")
             model = tf.keras.models.load_model('violence_detection_model')
             logger.info("Model loaded from SavedModel format")
             return True
-    except Exception as e:
-        logger.error(f"SavedModel loading failed: {e}")
+        except Exception as e:
+            logger.error(f"SavedModel loading failed: {str(e)}")
     
     logger.error("All model loading methods failed")
     return False
@@ -62,6 +101,24 @@ def health():
     """Health check endpoint"""
     model_status = "loaded" if model is not None else "not loaded"
     return jsonify({'status': 'healthy', 'model': model_status})
+
+@app.route('/debug')
+def debug():
+    """Debug endpoint to check system info"""
+    import tensorflow as tf
+    
+    debug_info = {
+        'working_directory': os.getcwd(),
+        'directory_contents': os.listdir('.'),
+        'tensorflow_version': tf.__version__,
+        'model_file_exists': os.path.exists('violence_detection_model.h5'),
+        'model_loaded': model is not None
+    }
+    
+    if os.path.exists('violence_detection_model.h5'):
+        debug_info['model_file_size'] = os.path.getsize('violence_detection_model.h5')
+    
+    return jsonify(debug_info)
 
 @app.route('/predict', methods=['POST'])
 def predict():
